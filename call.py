@@ -117,11 +117,12 @@ def send_seoul_trade_report():
         bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
 
         print(f"{gu} 실거래가 메시지 전송 완료.")
-        time.sleep(1)
+        time.sleep(5)
 
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
 
 
