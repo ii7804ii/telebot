@@ -78,7 +78,10 @@ def parse_xml_and_format(xml_text, gu_name, deal_ymd):
             dealDate = dealDay
         
 
-        exclusiveArea_m2 = item.findtext('exclusiveArea', '건물면적', default='0')
+        exclusiveArea_m2 = item.findtext('exclusiveArea', default='0')
+        exclusiveArea_m2 = item.findtext('전용면적', default='0')
+        exclusiveArea_m2 = item.findtext('건물면적', default='0')
+        exclusiveArea_m2 = item.findtext('건물면적(㎡)', default='0')
         
         try:
             exclusiveArea_m2 = float(exclusiveArea_m2)
@@ -125,6 +128,7 @@ def send_seoul_trade_report():
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
 
 
