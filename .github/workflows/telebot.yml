@@ -25,5 +25,6 @@ jobs:
       env:
         TOKEN: ${{ secrets.TOKEN }}
         CHAT_ID: ${{ secrets.CHAT_ID }}
+        SERVICE_KEY: ${{ secrets.SERVICE_KEY }}
       run: |
         python call.py
