@@ -52,7 +52,7 @@ def get_apt_data(lawd_cd, deal_ymd):
         print(f"{lawd_cd} 구 요청 실패:", e)
         return None
 
-def parse_xml_and_format(xml_text, gu_name):
+def parse_xml_and_format(xml_text, gu_name, deal_ymd):
     root = ET.fromstring(xml_text)
     items = root.find('.//items')
     if items is None:
@@ -76,7 +76,7 @@ def parse_xml_and_format(xml_text, gu_name):
             dealDate = dealDay
         
 
-        exclusiveArea_m2 = item.findtext('exclusiveArea', default='0')
+        exclusiveArea_m2 = item.findtext('전용면적', default='0')
         try:
             exclusiveArea_m2 = float(exclusiveArea_m2)
             exclusiveArea_py = round(exclusiveArea_m2 / 3.3058, 1)
@@ -114,7 +114,7 @@ def send_seoul_trade_report():
         if xml_data is None:
             continue
 
-        msg = parse_xml_and_format(xml_data, gu)
+        msg = parse_xml_and_format(xml_data, gu, deal_ymd)
         bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
 
         print(f"{gu} 실거래가 메시지 전송 완료.")
@@ -123,5 +123,6 @@ def send_seoul_trade_report():
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
 
