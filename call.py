@@ -79,7 +79,7 @@ def parse_xml_and_format(xml_text, gu_name, deal_ymd):
         exclusiveArea_m2 = item.findtext('exclusiveArea', default='0')
         try:
             exclusiveArea_m2 = float(exclusiveArea_m2)
-            area_str = f"{exclusiveArea_m2:.1f}㎡)"
+            area_str = f"{exclusiveArea_m2:.1f}㎡"
         except (ValueError, TypeError):
             area_str = "정보없음"
 
@@ -122,6 +122,7 @@ def send_seoul_trade_report():
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
 
 
