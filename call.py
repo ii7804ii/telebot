@@ -69,6 +69,12 @@ def parse_xml_and_format(xml_text, gu_name):
         buildYear = item.findtext('buildYear', default='정보없음')
         floor = item.findtext('floor', default='정보없음')
         dealDay = item.findtext('dealDay', default='정보없음')
+        deal_ym = deal_ymd[:6]  # '202508' 형태
+        try:
+            dealDate = f"{deal_ym[:4]}-{deal_ym[4:6]}-{dealDay.zfill(2)}"
+        except:
+            dealDate = dealDay
+        
 
         exclusiveArea_m2 = item.findtext('exclusiveArea', default='0')
         try:
@@ -86,7 +92,7 @@ def parse_xml_and_format(xml_text, gu_name):
             f"📐 전용면적: {area_str}\n"
             f"🏗️ 준공년도: {buildYear}\n"
             f"⬆️ 층수: {floor}층\n"
-            f"📅 거래일: {dealDay}일\n"
+            f"📅 거래일: {dealDate}\n"
             "---------------------\n"
         )
         count += 1
@@ -117,4 +123,5 @@ def send_seoul_trade_report():
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
