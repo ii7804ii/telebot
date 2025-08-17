@@ -86,7 +86,7 @@ def parse_xml_and_format(xml_text, gu_name):
             f"📐 전용면적: {area_str}\n"
             f"🏗️ 준공년도: {buildYear}\n"
             f"⬆️ 층수: {floor}층\n"
-            f"📅 거래일: {dealDay}일\n"
+            f"📅 거래일: {dealDay}월\n"
             "---------------------\n"
         )
         count += 1
@@ -115,4 +115,5 @@ def send_seoul_trade_report():
         time.sleep(1)
 
 if __name__ == "__main__":
+
     send_seoul_trade_report()
