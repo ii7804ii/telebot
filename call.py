@@ -58,6 +58,12 @@ def parse_xml_and_format(xml_text, gu_name, deal_ymd):
     if items is None:
         return f"{gu_name} 데이터가 없습니다.\n"
 
+    for item in items.findall('item'):
+         # item 안의 태그와 값을 출력
+        for child in item:
+            print(f"태그: {child.tag}, 값: {child.text}")
+        
+
     message = f"🏠 *{gu_name} 실거래가 (최근 5건)*\n\n"
     count = 0
 
@@ -122,6 +128,7 @@ def send_seoul_trade_report():
 if __name__ == "__main__":
 
     send_seoul_trade_report()
+
 
 
 
