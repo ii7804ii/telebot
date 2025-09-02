@@ -1,130 +1,84 @@
-import os
 import requests
-import telegram
-from datetime import datetime
-import time
 import xml.etree.ElementTree as ET
+import telegram
+import os
 
-# 🔐 GitHub Secrets에서 불러오기
-TOKEN = os.environ["TOKEN"]
+# 서비스 키와 텔레그램 토큰/챗ID는 Secrets에서 불러오기
+SERVICE_KEY = os.environ["SERVICE_KEY"]
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
-bot = telegram.Bot(token=TOKEN)
+bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
-SEOUL_DISTRICTS = [
-    '종로구', '중구', '용산구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구',
-    '도봉구', '노원구', '은평구', '서대문구', '마포구', '양천구', '강서구', '구로구', '금천구',
-    '영등포구', '동작구', '관악구', '서초구', '강남구', '송파구', '강동구'
+# 구 리스트
+GUS = [
+    "강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구",
+    "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구",
+    "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구",
+    "은평구", "종로구", "중구", "중랑구"
 ]
 
-GU_CODE = {
-    '종로구': '11110', '중구': '11140', '용산구': '11170', '성동구': '11200', '광진구': '11215',
-    '동대문구': '11230', '중랑구': '11260', '성북구': '11290', '강북구': '11305', '도봉구': '11320',
-    '노원구': '11350', '은평구': '11380', '서대문구': '11410', '마포구': '11440', '양천구': '11470',
-    '강서구': '11500', '구로구': '11530', '금천구': '11545', '영등포구': '11560', '동작구': '11590',
-    '관악구': '11620', '서초구': '11650', '강남구': '11680', '송파구': '11710', '강동구': '11740'
-}
-
-BASE_URL = "http://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
-SERVICE_KEY = os.environ["SERVICE_KEY"]  # 공공데이터포털 키도 Secrets에 저장 추천
-
-def convert_to_억(amt_str):
-    try:
-        amt_num = int(amt_str.replace(',', ''))
-        억 = amt_num / 10000
-        return f"{억:.2f}억"
-    except:
-        return amt_str
-
-def get_apt_data(lawd_cd, deal_ymd):
+# 아파트 매매 실거래가 조회 API 호출
+def get_apt_data(gu):
+    url = f"http://openapi.molit.go.kr:8081/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev"
     params = {
-        'serviceKey': SERVICE_KEY,
-        'LAWD_CD': lawd_cd,
-        'DEAL_YMD': deal_ymd,
-        'pageNo': 1,
-        'numOfRows': 10
+        "serviceKey": SERVICE_KEY,
+        "LAWD_CD": get_lawd_cd(gu),
+        "DEAL_YMD": get_current_ym()
     }
-    try:
-        r = requests.get(BASE_URL, params=params, timeout=10)
-        r.raise_for_status()
-        return r.text
-    except Exception as e:
-        print(f"{lawd_cd} 구 요청 실패:", e)
-        return None
+    r = requests.get(url, params=params)
+    xml_data = r.text
 
-def parse_xml_and_format(xml_text, gu_name, deal_ymd):
-    root = ET.fromstring(xml_text)
-    items = root.find('.//items')
-    if items is None:
-        return f"{gu_name} 데이터가 없습니다.\n"
+    # ✅ 응답 원문 앞부분 찍기 (디버깅용)
+    print(f"[{gu}] 응답 원문: {xml_data[:500]}")
 
-      
+    return xml_data
 
-    message = f"🏠 *{gu_name} 실거래가 (최근 5건)*\n\n"
-    count = 0
+# 구 이름을 코드로 변환
+def get_lawd_cd(gu):
+    gu_cd_map = {
+        "강남구": "11680", "강동구": "11740", "강북구": "11305", "강서구": "11500",
+        "관악구": "11620", "광진구": "11215", "구로구": "11530", "금천구": "11545",
+        "노원구": "11350", "도봉구": "11320", "동대문구": "11230", "동작구": "11590",
+        "마포구": "11440", "서대문구": "11410", "서초구": "11650", "성동구": "11200",
+        "성북구": "11290", "송파구": "11710", "양천구": "11470", "영등포구": "11560",
+        "용산구": "11170", "은평구": "11380", "종로구": "11110", "중구": "11140",
+        "중랑구": "11260"
+    }
+    return gu_cd_map[gu]
 
-    for item in items.findall('item'):
-        if count >= 5:
-            break
-        aptNm = item.findtext('aptNm', default='정보없음')
-        dealAmount = item.findtext('dealAmount', default='0')
-        buildYear = item.findtext('buildYear', default='정보없음')
-        floor = item.findtext('floor', default='정보없음')
-        dealDay = item.findtext('dealDay', default='정보없음')
-        deal_ym = deal_ymd[:6]  # '202508' 형태
+# 현재 연월 (YYYYMM)
+def get_current_ym():
+    from datetime import datetime
+    return datetime.now().strftime("%Y%m")
+
+# XML 파싱 후 메시지 포맷
+def parse_xml_and_format(xml_data, gu):
+    root = ET.fromstring(xml_data)
+    items = root.findall(".//item")
+
+    if not items:
+        return f"[{gu}] 데이터가 없습니다."
+
+    messages = []
+    for item in items[:5]:  # 최근 5개만
         try:
-            dealDate = f"{deal_ym[:4]}-{deal_ym[4:6]}-{dealDay.zfill(2)}"
-        except:
-            dealDate = dealDay
-        
+            apt_name = item.find("아파트").text
+            deal_amount = item.find("거래금액").text.strip()
+            deal_date = f"{item.find('년').text}.{item.find('월').text}.{item.find('일').text}"
+            exclu_use_ar = item.find("전용면적").text
+            messages.append(f"{deal_date} | {apt_name} | {exclu_use_ar}㎡ | {deal_amount}만원")
+        except Exception as e:
+            messages.append(f"[오류 발생] {e}")
 
-        exclusiveArea_m2 = item.findtext('excluUseAr', default='0')
-             
-        try:
-            exclusiveArea_m2 = float(exclusiveArea_m2)
-            area_str = f"{exclusiveArea_m2:.1f}㎡"    
-        except (ValueError, TypeError):
-            area_str = "정보없음"
+    return f"[{gu}] 최신 거래\n" + "\n".join(messages)
 
-        dealAmount_억 = convert_to_억(dealAmount)
-
-        message += (
-            f"🏢 아파트: {aptNm}\n"
-            f"💰 거래금액: {dealAmount_억}\n"
-            f"📐 전용면적: {area_str}\n"
-            f"🏗️ 준공년도: {buildYear}\n"
-            f"⬆️ 층수: {floor}층\n"
-            f"📅 거래일: {dealDate}\n"
-            "---------------------------------------\n"
-        )
-        count += 1
-
-    message += f"\n📅 기준일: {datetime.now().strftime('%Y-%m-%d')}\n\n"
-    return message
-
-def send_seoul_trade_report():
-    print("실거래가 알림 전송 시작...")
-    deal_ymd = datetime.now().strftime('%Y%m')
-
-    for gu in SEOUL_DISTRICTS:
-        lawd_cd = GU_CODE.get(gu)
-        if not lawd_cd:
-            print(f"{gu} 코드가 없습니다.")
-            continue
-
-        xml_data = get_apt_data(lawd_cd, deal_ymd)
-        if xml_data is None:
-            continue
-
-        msg = parse_xml_and_format(xml_data, gu, deal_ymd)
-        bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
-
-        print(f"{gu} 실거래가 메시지 전송 완료.")
-        time.sleep(5)
-
+# 메인 실행
 if __name__ == "__main__":
-
-    send_seoul_trade_report()
+    for gu in GUS:
+        xml_data = get_apt_data(gu)
+        message = parse_xml_and_format(xml_data, gu)
+        bot.send_message(chat_id=CHAT_ID, text=message)
 
 
 
