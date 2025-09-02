@@ -23,7 +23,7 @@ jobs:
 
     - name: Run telegram bot script
       env:
-        TOKEN: ${{ secrets.TOKEN }}
+        TELEGRAM_TOKEN: ${{ secrets.TOKEN }}
         CHAT_ID: ${{ secrets.CHAT_ID }}
         SERVICE_KEY: ${{ secrets.SERVICE_KEY }}
       run: |
