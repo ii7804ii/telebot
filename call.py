@@ -5,9 +5,9 @@ import time
 import xml.etree.ElementTree as ET
 
 # 서비스 키와 텔레그램 토큰/챗ID는 Secrets에서 불러오기
-SERVICE_KEY = os.environ["8gOjRZeGbJbMYAoUhN+0ScO2USzZ/lDps0lwEkm8xOCqNYcYIb3SSwM5VMCQDDZlUPQgrNCGsP3dqrgTrFxUCg=="]
-TELEGRAM_TOKEN = os.environ["8291253249:AAGTxG5qi1rA01e6GzHx1g7jxMYzjU1jNNQ"]
-CHAT_ID = os.environ["-1002804190562"]
+SERVICE_KEY = os.environ["SERVICE_KEY"]
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+CHAT_ID = os.environ["CHAT_ID"]
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
@@ -80,6 +80,7 @@ if __name__ == "__main__":
         xml_data = get_apt_data(gu)
         message = parse_xml_and_format(xml_data, gu)
         bot.send_message(chat_id=CHAT_ID, text=message)
+
 
 
 
