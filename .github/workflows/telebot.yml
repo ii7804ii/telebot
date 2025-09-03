@@ -1,9 +1,7 @@
-name: Send Daily Apartment Prices
+name: Test Telegram Bot
 
 on:
-  schedule:
-    - cron: '0 1 * * *'  # 매일 10시(KST)
-  workflow_dispatch:      # 수동 실행 가능
+  workflow_dispatch:  # 수동 실행만 테스트용
 
 jobs:
   send-message:
