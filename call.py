@@ -12,11 +12,24 @@ CHAT_ID = os.environ["CHAT_ID"]
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
-# 테스트용 구 1개만
-GUS = ["강남구"]
+# 서울 구 리스트
+GUS = [
+    "강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구",
+    "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구",
+    "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구",
+    "은평구", "종로구", "중구", "중랑구"
+]
 
 def get_lawd_cd(gu):
-    gu_cd_map = {"강남구": "11680"}
+    gu_cd_map = {
+        "강남구": "11680", "강동구": "11740", "강북구": "11305", "강서구": "11500",
+        "관악구": "11620", "광진구": "11215", "구로구": "11530", "금천구": "11545",
+        "노원구": "11350", "도봉구": "11320", "동대문구": "11230", "동작구": "11590",
+        "마포구": "11440", "서대문구": "11410", "서초구": "11650", "성동구": "11200",
+        "성북구": "11290", "송파구": "11710", "양천구": "11470", "영등포구": "11560",
+        "용산구": "11170", "은평구": "11380", "종로구": "11110", "중구": "11140",
+        "중랑구": "11260"
+    }
     return gu_cd_map[gu]
 
 def get_current_ym():
@@ -31,7 +44,7 @@ def get_apt_data(gu):
     }
     r = requests.get(url, params=params)
     xml_data = r.text
-    print(f"[{gu}] 응답 원문: {xml_data[:500]}")  # 디버깅
+    print(f"[{gu}] 응답 원문: {xml_data[:500]}")
     return xml_data
 
 def parse_xml_and_format(xml_data, gu):
@@ -39,6 +52,7 @@ def parse_xml_and_format(xml_data, gu):
     items = root.findall(".//item")
     if not items:
         return f"[{gu}] 데이터가 없습니다."
+
     messages = []
     for item in items[:5]:
         try:
@@ -49,6 +63,7 @@ def parse_xml_and_format(xml_data, gu):
             messages.append(f"{deal_date} | {apt_name} | {exclu_use_ar}㎡ | {deal_amount}만원")
         except Exception as e:
             messages.append(f"[오류 발생] {e}")
+
     return f"[{gu}] 최신 거래\n" + "\n".join(messages)
 
 if __name__ == "__main__":
@@ -60,13 +75,3 @@ if __name__ == "__main__":
             time.sleep(1)
         except Exception as e:
             print(f"[{gu}] 처리 중 오류 발생: {e}")
-
-
-
-
-
-
-
-
-
-
