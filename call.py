@@ -1,40 +1,24 @@
-import os
 import requests
 import telegram
+import os
 from datetime import datetime
-import time 
 import xml.etree.ElementTree as ET
+import time
 
-# 서비스 키와 텔레그램 토큰/챗ID는 Secrets에서 불러오기
+# 환경변수에서 서비스 키와 텔레그램 정보 가져오기
 SERVICE_KEY = os.environ["SERVICE_KEY"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
-# 구 리스트
+# 서울 구 리스트
 GUS = [
     "강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구",
     "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구",
     "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구",
     "은평구", "종로구", "중구", "중랑구"
 ]
-
-# 아파트 매매 실거래가 조회 API 호출
-def get_apt_data(gu):
-    url = f"http://openapi.molit.go.kr:8081/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev"
-    params = {
-        "serviceKey": SERVICE_KEY,
-        "LAWD_CD": get_lawd_cd(gu),
-        "DEAL_YMD": get_current_ym()
-    }
-    r = requests.get(url, params=params)
-    xml_data = r.text
-
-    # ✅ 응답 원문 앞부분 찍기 (디버깅용)
-    print(f"[{gu}] 응답 원문: {xml_data[:500]}")
-
-    return xml_data
 
 # 구 이름을 코드로 변환
 def get_lawd_cd(gu):
@@ -51,8 +35,23 @@ def get_lawd_cd(gu):
 
 # 현재 연월 (YYYYMM)
 def get_current_ym():
-    from datetime import datetime
     return datetime.now().strftime("%Y%m")
+
+# 아파트 매매 실거래가 API 호출
+def get_apt_data(gu):
+    url = "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev"
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "LAWD_CD": get_lawd_cd(gu),
+        "DEAL_YMD": get_current_ym()
+    }
+    r = requests.get(url, params=params)
+    xml_data = r.text
+
+    # 디버깅용 응답 일부 출력
+    print(f"[{gu}] 응답 원문: {xml_data[:500]}")
+
+    return xml_data
 
 # XML 파싱 후 메시지 포맷
 def parse_xml_and_format(xml_data, gu):
@@ -78,9 +77,15 @@ def parse_xml_and_format(xml_data, gu):
 # 메인 실행
 if __name__ == "__main__":
     for gu in GUS:
-        xml_data = get_apt_data(gu)
-        message = parse_xml_and_format(xml_data, gu)
-        bot.send_message(chat_id=CHAT_ID, text=message)
+        try:
+            xml_data = get_apt_data(gu)
+            message = parse_xml_and_format(xml_data, gu)
+            bot.send_message(chat_id=CHAT_ID, text=message)
+            time.sleep(1)  # 텔레그램 메시지 간격 조절
+        except Exception as e:
+            print(f"[{gu}] 처리 중 오류 발생: {e}")
+
+
 
 
 
