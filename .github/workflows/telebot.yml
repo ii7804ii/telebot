@@ -1,7 +1,9 @@
-name: Test Telegram Bot
+name: Send Daily Apartment Prices
 
 on:
-  workflow_dispatch:  # 수동 실행만 테스트용
+  schedule:
+    - cron: '0 1 * * *'  # 매일 10시 KST
+  workflow_dispatch:      # 수동 실행 가능
 
 jobs:
   send-message:
@@ -20,6 +22,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests python-telegram-bot
+
+      - name: Check file path
+        run: ls -R telebot
 
       - name: Run call.py
         env:
